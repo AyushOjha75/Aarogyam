@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Aarogyam" parent="android:Theme.Material.NoTitleBar">
+        <item name="android:windowBackground">@color/charcoal_950</item>
+        <item name="android:statusBarColor">@color/charcoal_950</item>
+        <item name="android:navigationBarColor">@color/charcoal_950</item>
+    </style>
+</resources>

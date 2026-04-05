@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Aarogyam</string>
+    <string name="minimal_widget_name">Aarogyam – Weight</string>
+    <string name="minimal_widget_description">Shows your most recent weight log at a glance.</string>
+    <string name="progress_widget_name">Aarogyam – Progress</string>
+    <string name="progress_widget_description">Displays a progress bar toward your weight goal.</string>
+    <string name="trend_widget_name">Aarogyam – Trend</string>
+    <string name="trend_widget_description">Shows a sparkline of your recent weight trend.</string>
+</resources>
