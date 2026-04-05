@@ -55,10 +55,12 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build debug APK
-        run: ./gradlew -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.caching=true assembleDebug
+        run: ./gradlew -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.caching=true assembleDebug --stacktrace
 
       - name: Verify APK exists
-        run: ls -lh app/build/outputs/apk/debug/
+        run: |
+          find app/build/outputs -name "*.apk" 2>/dev/null || echo "No APK found"
+          ls -lh app/build/outputs/apk/debug/
 
       - name: Get version name
         id: version
