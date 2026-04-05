@@ -3,20 +3,25 @@ package com.aarogyam.widget.progress
 import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
+import androidx.glance.LocalSize
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.LinearProgressIndicator
+import androidx.glance.appwidget.SizeMode
 import androidx.glance.appwidget.provideContent
 import androidx.glance.background
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Box
 import androidx.glance.layout.Column
+import androidx.glance.layout.Spacer
 import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.fillMaxWidth
+import androidx.glance.layout.height
 import androidx.glance.layout.padding
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
@@ -27,6 +32,13 @@ import com.aarogyam.domain.UnitConverter
 import kotlinx.coroutines.flow.first
 
 class ProgressWidget : GlanceAppWidget() {
+
+    companion object {
+        val MEDIUM = DpSize(180.dp, 40.dp)
+        val LARGE = DpSize(250.dp, 100.dp)
+    }
+
+    override val sizeMode = SizeMode.Responsive(setOf(MEDIUM, LARGE))
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val data = safeDbRead(context)
@@ -47,10 +59,12 @@ class ProgressWidget : GlanceAppWidget() {
             val progress = if (goalDisplay > 0) {
                 (currentDisplay / goalDisplay).toFloat().coerceIn(0f, 1f)
             } else 0f
+            val percentage = (progress * 100).toInt()
             ProgressWidgetData(
                 formattedCurrent = UnitConverter.format(latest.weightKg, unit),
                 formattedGoal = UnitConverter.format(goalKg, unit),
-                progress = progress
+                progress = progress,
+                percentage = percentage
             )
         } catch (e: Exception) {
             null
@@ -67,11 +81,15 @@ class ProgressWidget : GlanceAppWidget() {
 data class ProgressWidgetData(
     val formattedCurrent: String,
     val formattedGoal: String,
-    val progress: Float
+    val progress: Float,
+    val percentage: Int
 )
 
 @Composable
 private fun ProgressWidgetContent(data: ProgressWidgetData?) {
+    val size = LocalSize.current
+    val isLarge = size.height >= ProgressWidget.LARGE.height
+
     Box(
         modifier = GlanceModifier
             .fillMaxSize()
@@ -84,7 +102,38 @@ private fun ProgressWidgetContent(data: ProgressWidgetData?) {
                 text = "Set a goal in app",
                 style = TextStyle(color = ColorProvider(Color(0xFF8A8A96)), fontSize = 12.sp)
             )
+        } else if (isLarge) {
+            // Large: percentage + bar + current/goal stacked
+            Column(
+                modifier = GlanceModifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "${data.percentage}%",
+                    style = TextStyle(
+                        color = ColorProvider(Color(0xFFE8A045)),
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                )
+                Spacer(modifier = GlanceModifier.height(6.dp))
+                LinearProgressIndicator(
+                    progress = data.progress,
+                    modifier = GlanceModifier.fillMaxWidth(),
+                    color = ColorProvider(Color(0xFFE8A045)),
+                    backgroundColor = ColorProvider(Color(0xFF3E3E46))
+                )
+                Spacer(modifier = GlanceModifier.height(6.dp))
+                Text(
+                    text = "${data.formattedCurrent} / ${data.formattedGoal}",
+                    style = TextStyle(
+                        color = ColorProvider(Color(0xFF8A8A96)),
+                        fontSize = 12.sp
+                    )
+                )
+            }
         } else {
+            // Medium: current/goal + bar
             Column(
                 modifier = GlanceModifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally

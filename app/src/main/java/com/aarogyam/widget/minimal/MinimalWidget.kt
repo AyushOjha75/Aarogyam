@@ -3,17 +3,21 @@ package com.aarogyam.widget.minimal
 import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
+import androidx.glance.LocalSize
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetManager
+import androidx.glance.appwidget.SizeMode
 import androidx.glance.appwidget.provideContent
 import androidx.glance.background
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Box
 import androidx.glance.layout.Column
+import androidx.glance.layout.Row
 import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.padding
 import androidx.glance.text.FontWeight
@@ -29,6 +33,13 @@ import java.util.Date
 import java.util.Locale
 
 class MinimalWidget : GlanceAppWidget() {
+
+    companion object {
+        val SMALL = DpSize(110.dp, 40.dp)
+        val MEDIUM = DpSize(180.dp, 40.dp)
+    }
+
+    override val sizeMode = SizeMode.Responsive(setOf(SMALL, MEDIUM))
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val data = safeDbRead(context)
@@ -62,6 +73,9 @@ data class MinimalWidgetData(val formattedWeight: String, val date: String)
 
 @Composable
 private fun MinimalWidgetContent(data: MinimalWidgetData?) {
+    val size = LocalSize.current
+    val isMedium = size.width >= MinimalWidget.MEDIUM.width
+
     Box(
         modifier = GlanceModifier
             .fillMaxSize()
@@ -71,10 +85,30 @@ private fun MinimalWidgetContent(data: MinimalWidgetData?) {
     ) {
         if (data == null) {
             Text(
-                text = "No data yet — open app to log weight",
+                text = "No data yet",
                 style = TextStyle(color = ColorProvider(Color(0xFF8A8A96)), fontSize = 11.sp)
             )
+        } else if (isMedium) {
+            // Medium: weight + date side by side
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = data.formattedWeight,
+                    style = TextStyle(
+                        color = ColorProvider(Color(0xFFE8A045)),
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                )
+                Text(
+                    text = "  •  ${data.date}",
+                    style = TextStyle(
+                        color = ColorProvider(Color(0xFF8A8A96)),
+                        fontSize = 11.sp
+                    )
+                )
+            }
         } else {
+            // Small: weight only
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
                     text = data.formattedWeight,
@@ -82,13 +116,6 @@ private fun MinimalWidgetContent(data: MinimalWidgetData?) {
                         color = ColorProvider(Color(0xFFE8A045)),
                         fontSize = 22.sp,
                         fontWeight = FontWeight.Bold
-                    )
-                )
-                Text(
-                    text = data.date,
-                    style = TextStyle(
-                        color = ColorProvider(Color(0xFF8A8A96)),
-                        fontSize = 11.sp
                     )
                 )
             }

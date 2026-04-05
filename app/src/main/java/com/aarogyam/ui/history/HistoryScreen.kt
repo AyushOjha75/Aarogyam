@@ -1,6 +1,7 @@
 package com.aarogyam.ui.history
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -35,6 +36,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.aarogyam.data.db.WeightLog
 import com.aarogyam.domain.UnitConverter
 import com.aarogyam.domain.WeightUnit
+import com.aarogyam.ui.components.AarogyamCard
+import com.aarogyam.ui.components.AarogyamTopBar
+import com.aarogyam.ui.components.EmptyStateMessage
+import com.aarogyam.ui.components.SectionHeader
 import com.aarogyam.ui.theme.Amber400
 import com.aarogyam.ui.theme.Danger
 import com.patrykandpatrick.vico.compose.cartesian.CartesianChartHost
@@ -71,12 +76,34 @@ fun HistoryScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        Text(
-            text = "History",
-            style = MaterialTheme.typography.headlineMedium,
-            color = MaterialTheme.colorScheme.onBackground,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
-        )
+        AarogyamTopBar(title = "History")
+
+        if (state.entries.isNotEmpty()) {
+            // Summary row
+            val displayValues = state.entries.map { UnitConverter.toDisplay(it.weightKg, state.unit) }
+            val highest = displayValues.max()
+            val lowest = displayValues.min()
+            val average = displayValues.average()
+            AarogyamCard(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp)
+            ) {
+                Column {
+                    SectionHeader("Summary")
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        SummaryStatColumn("Entries", "${state.entries.size}")
+                        SummaryStatColumn("Highest", "${"%.1f".format(highest)} ${state.unit.label}")
+                        SummaryStatColumn("Lowest", "${"%.1f".format(lowest)} ${state.unit.label}")
+                        SummaryStatColumn("Average", "${"%.1f".format(average)} ${state.unit.label}")
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+        }
 
         if (state.chartPoints.size >= 2) {
             CartesianChartHost(
@@ -89,22 +116,13 @@ fun HistoryScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(200.dp)
-                    .padding(horizontal = 16.dp)
+                    .padding(horizontal = 20.dp)
             )
             Spacer(modifier = Modifier.height(8.dp))
         }
 
         if (state.entries.isEmpty()) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "No entries yet. Start logging weight!",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
+            EmptyStateMessage("No entries yet. Start logging weight!")
         } else {
             LazyColumn(modifier = Modifier.fillMaxSize()) {
                 items(state.entries, key = { it.id }) { log ->
@@ -136,6 +154,22 @@ fun HistoryScreen(
                     Text("Cancel")
                 }
             }
+        )
+    }
+}
+
+@Composable
+private fun SummaryStatColumn(label: String, value: String) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            text = value,
+            style = MaterialTheme.typography.titleMedium,
+            color = Amber400
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }

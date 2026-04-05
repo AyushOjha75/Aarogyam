@@ -23,8 +23,12 @@ class WeightRepository private constructor(
 
     val goalKg: Flow<Double> = preferencesRepository.goalKg
 
-    suspend fun logWeight(kg: Double, notes: String?) {
-        dao.insert(WeightLog(weightKg = kg, notes = notes))
+    val heightCm: Flow<Double> = preferencesRepository.heightCm
+
+    val appTheme: Flow<String> = preferencesRepository.appTheme
+
+    suspend fun logWeight(kg: Double, notes: String?, loggedAt: Long = System.currentTimeMillis()) {
+        dao.insert(WeightLog(weightKg = kg, notes = notes, loggedAt = loggedAt))
     }
 
     suspend fun deleteLog(log: WeightLog) {
@@ -42,6 +46,14 @@ class WeightRepository private constructor(
 
     suspend fun setUnit(unit: WeightUnit) {
         preferencesRepository.setUnit(unit.name)
+    }
+
+    suspend fun setHeightCm(cm: Double) {
+        preferencesRepository.setHeightCm(cm)
+    }
+
+    suspend fun setAppTheme(theme: String) {
+        preferencesRepository.setAppTheme(theme)
     }
 
     companion object {

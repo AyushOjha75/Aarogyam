@@ -24,6 +24,16 @@ class GoalViewModel @Inject constructor(
     val weightUnit: StateFlow<WeightUnit> = repository.weightUnit
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), WeightUnit.KG)
 
+    val heightCm: StateFlow<Double> = repository.heightCm
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0.0)
+
+    val latestWeightKg: StateFlow<Double> = kotlinx.coroutines.flow.flow {
+        emit(repository.getLatest()?.weightKg ?: 0.0)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0.0)
+
+    val appTheme: StateFlow<String> = repository.appTheme
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), "DARK")
+
     fun saveGoal(displayVal: String) {
         val value = displayVal.toDoubleOrNull() ?: return
         viewModelScope.launch {
@@ -35,6 +45,19 @@ class GoalViewModel @Inject constructor(
     fun toggleUnit(useImperial: Boolean) {
         viewModelScope.launch {
             repository.setUnit(if (useImperial) WeightUnit.LBS else WeightUnit.KG)
+        }
+    }
+
+    fun saveHeight(cm: String) {
+        val value = cm.toDoubleOrNull() ?: return
+        viewModelScope.launch {
+            repository.setHeightCm(value)
+        }
+    }
+
+    fun saveTheme(theme: String) {
+        viewModelScope.launch {
+            repository.setAppTheme(theme)
         }
     }
 }

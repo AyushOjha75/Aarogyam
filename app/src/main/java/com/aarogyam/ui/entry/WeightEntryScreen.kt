@@ -1,31 +1,39 @@
 package com.aarogyam.ui.entry
 
-import androidx.compose.foundation.layout.Arrangement
+import android.app.DatePickerDialog
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.aarogyam.ui.components.AarogyamButton
+import com.aarogyam.ui.components.AarogyamCard
+import com.aarogyam.ui.components.AarogyamTextField
+import com.aarogyam.ui.components.AarogyamTopBar
+import com.aarogyam.ui.components.SectionHeader
 import com.aarogyam.ui.theme.Amber400
 import java.text.SimpleDateFormat
+import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
@@ -38,72 +46,118 @@ fun WeightEntryScreen(
     var notesInput by remember { mutableStateOf("") }
     var saved by remember { mutableStateOf(false) }
 
-    val today = remember {
-        SimpleDateFormat("EEEE, d MMMM yyyy", Locale.getDefault()).format(Date())
+    val context = LocalContext.current
+    val now = remember { Calendar.getInstance() }
+    var selectedDateMillis by remember { mutableLongStateOf(System.currentTimeMillis()) }
+
+    val dateLabel = remember(selectedDateMillis) {
+        SimpleDateFormat("EEEE, d MMMM yyyy", Locale.getDefault()).format(Date(selectedDateMillis))
     }
+
+    val parsedWeight = weightInput.toDoubleOrNull()
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(24.dp),
-        verticalArrangement = Arrangement.Center,
+            .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
-            text = "Log Weight",
-            style = MaterialTheme.typography.headlineMedium,
-            color = MaterialTheme.colorScheme.onBackground
-        )
+        AarogyamTopBar(title = "Log Weight")
+
+        // Live weight preview
+        if (parsedWeight != null) {
+            Text(
+                text = "${"%.1f".format(parsedWeight)} ${unit.label}",
+                style = MaterialTheme.typography.displayMedium,
+                color = Amber400,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 8.dp)
+            )
+        } else {
+            Spacer(modifier = Modifier.height(24.dp))
+        }
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        Text(
-            text = today,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+        AarogyamCard(modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp)) {
+            Column {
+                SectionHeader("Entry Details")
 
-        Spacer(modifier = Modifier.height(32.dp))
+                AarogyamTextField(
+                    value = weightInput,
+                    onValueChange = {
+                        weightInput = it
+                        saved = false
+                    },
+                    label = "Weight (${unit.label})",
+                    keyboardType = KeyboardType.Decimal
+                )
 
-        OutlinedTextField(
-            value = weightInput,
-            onValueChange = {
-                weightInput = it
-                saved = false
-            },
-            label = { Text("Weight (${unit.label})") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth()
-        )
+                Spacer(modifier = Modifier.height(16.dp))
 
-        Spacer(modifier = Modifier.height(16.dp))
+                AarogyamTextField(
+                    value = notesInput,
+                    onValueChange = { notesInput = it },
+                    label = "Notes (optional)",
+                    keyboardType = KeyboardType.Text
+                )
 
-        OutlinedTextField(
-            value = notesInput,
-            onValueChange = { notesInput = it },
-            label = { Text("Notes (optional)") },
-            modifier = Modifier.fillMaxWidth(),
-            maxLines = 3
-        )
+                Spacer(modifier = Modifier.height(16.dp))
 
-        Spacer(modifier = Modifier.height(32.dp))
+                SectionHeader("Date")
 
-        Button(
+                OutlinedButton(
+                    onClick = {
+                        val cal = Calendar.getInstance().apply { timeInMillis = selectedDateMillis }
+                        val dpd = DatePickerDialog(
+                            context,
+                            { _, year, month, day ->
+                                val picked = Calendar.getInstance().apply {
+                                    set(year, month, day, cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE), 0)
+                                    set(Calendar.MILLISECOND, 0)
+                                }
+                                selectedDateMillis = picked.timeInMillis
+                            },
+                            cal.get(Calendar.YEAR),
+                            cal.get(Calendar.MONTH),
+                            cal.get(Calendar.DAY_OF_MONTH)
+                        )
+                        // Allow any past date — no future restriction beyond today
+                        dpd.datePicker.maxDate = System.currentTimeMillis()
+                        dpd.show()
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = dateLabel,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        AarogyamButton(
+            text = if (saved) "Saved!" else "Save Entry",
             onClick = {
-                viewModel.logWeight(weightInput, notesInput)
+                viewModel.logWeight(weightInput, notesInput, selectedDateMillis)
                 weightInput = ""
                 notesInput = ""
+                selectedDateMillis = System.currentTimeMillis()
                 saved = true
             },
             enabled = weightInput.isNotBlank(),
-            colors = ButtonDefaults.buttonColors(containerColor = Amber400),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(
-                text = if (saved) "Saved!" else "Save",
-                color = MaterialTheme.colorScheme.onPrimary
-            )
-        }
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp)
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
     }
 }

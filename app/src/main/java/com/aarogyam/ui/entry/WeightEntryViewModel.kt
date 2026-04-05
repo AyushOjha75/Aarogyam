@@ -23,12 +23,12 @@ class WeightEntryViewModel @Inject constructor(
     val weightUnit: StateFlow<WeightUnit> = repository.weightUnit
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), WeightUnit.KG)
 
-    fun logWeight(displayValue: String, notes: String) {
+    fun logWeight(displayValue: String, notes: String, loggedAt: Long = System.currentTimeMillis()) {
         val parsed = displayValue.toDoubleOrNull() ?: return
         viewModelScope.launch {
             val unit = weightUnit.value
             val kg = UnitConverter.toStorageKg(parsed, unit)
-            repository.logWeight(kg, notes.ifBlank { null })
+            repository.logWeight(kg, notes.ifBlank { null }, loggedAt)
             WidgetUpdateReceiver.send(getApplication())
         }
     }

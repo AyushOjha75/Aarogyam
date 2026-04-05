@@ -5,6 +5,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.List
+import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -25,10 +28,15 @@ import com.aarogyam.ui.goal.GoalScreen
 import com.aarogyam.ui.history.HistoryScreen
 import com.aarogyam.ui.theme.Amber400
 
-sealed class Screen(val route: String, val label: String, val icon: ImageVector) {
-    object Entry : Screen("entry", "Log", Icons.Default.Add)
-    object History : Screen("history", "History", Icons.Default.List)
-    object Goal : Screen("goal", "Goal", Icons.Default.Star)
+sealed class Screen(
+    val route: String,
+    val label: String,
+    val icon: ImageVector,
+    val iconOutlined: ImageVector
+) {
+    object Entry : Screen("entry", "Log", Icons.Default.Add, Icons.Outlined.Add)
+    object History : Screen("history", "History", Icons.Default.List, Icons.Outlined.List)
+    object Goal : Screen("goal", "Goal", Icons.Default.Star, Icons.Outlined.Star)
 }
 
 private val bottomNavItems = listOf(Screen.Entry, Screen.History, Screen.Goal)
@@ -54,7 +62,12 @@ fun AppNavGraph() {
                                 restoreState = true
                             }
                         },
-                        icon = { Icon(screen.icon, contentDescription = screen.label) },
+                        icon = {
+                            Icon(
+                                if (currentRoute == screen.route) screen.icon else screen.iconOutlined,
+                                contentDescription = screen.label
+                            )
+                        },
                         label = { Text(screen.label) },
                         colors = NavigationBarItemDefaults.colors(
                             selectedIconColor = Amber400,
