@@ -55,7 +55,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build debug APK
-        run: ./gradlew assembleDebug -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
+        run: ./gradlew -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.caching=true assembleDebug
 
       - name: Get version name
         id: version
