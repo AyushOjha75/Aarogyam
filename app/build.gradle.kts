@@ -1,7 +1,6 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.hilt)
     alias(libs.plugins.ksp)
 }
@@ -43,8 +42,8 @@ android {
         compose = true
     }
 
-    room {
-        schemaDirectory("$projectDir/schemas")
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.5.14"
     }
 }
 
