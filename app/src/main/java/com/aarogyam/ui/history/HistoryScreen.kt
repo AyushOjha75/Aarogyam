@@ -1,6 +1,5 @@
 package com.aarogyam.ui.history
 
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,15 +16,11 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DismissDirection
-import androidx.compose.material3.DismissValue
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SwipeToDismiss
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberDismissState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -34,7 +29,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -54,7 +48,6 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HistoryScreen(
     viewModel: HistoryViewModel = hiltViewModel()
@@ -62,7 +55,7 @@ fun HistoryScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     var pendingDelete by remember { mutableStateOf<WeightLog?>(null) }
 
-    val modelProducer = remember { CartesianChartModelProducer() }
+    val modelProducer = remember { CartesianChartModelProducer.build() }
 
     LaunchedEffect(state.chartPoints) {
         if (state.chartPoints.size >= 2) {
@@ -115,42 +108,10 @@ fun HistoryScreen(
         } else {
             LazyColumn(modifier = Modifier.fillMaxSize()) {
                 items(state.entries, key = { it.id }) { log ->
-                    val dismissState = rememberDismissState(
-                        confirmValueChange = { value ->
-                            if (value == DismissValue.DismissedToStart) {
-                                pendingDelete = log
-                                false
-                            } else false
-                        }
-                    )
-
-                    SwipeToDismiss(
-                        state = dismissState,
-                        directions = setOf(DismissDirection.EndToStart),
-                        background = {
-                            val color by animateColorAsState(
-                                targetValue = if (dismissState.targetValue == DismissValue.Default) {
-                                    MaterialTheme.colorScheme.surface
-                                } else Danger,
-                                label = "swipe_bg"
-                            )
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .background(color)
-                                    .padding(end = 16.dp),
-                                contentAlignment = Alignment.CenterEnd
-                            ) {
-                                Icon(
-                                    Icons.Default.Delete,
-                                    contentDescription = "Delete",
-                                    tint = Color.White
-                                )
-                            }
-                        },
-                        dismissContent = {
-                            WeightLogRow(log = log, unit = state.unit)
-                        }
+                    WeightLogRow(
+                        log = log,
+                        unit = state.unit,
+                        onDeleteClick = { pendingDelete = log }
                     )
                 }
             }
@@ -180,7 +141,7 @@ fun HistoryScreen(
 }
 
 @Composable
-fun WeightLogRow(log: WeightLog, unit: WeightUnit) {
+fun WeightLogRow(log: WeightLog, unit: WeightUnit, onDeleteClick: () -> Unit) {
     val dateStr = remember(log.loggedAt) {
         SimpleDateFormat("d MMM yyyy, HH:mm", Locale.getDefault()).format(Date(log.loggedAt))
     }
@@ -216,6 +177,13 @@ fun WeightLogRow(log: WeightLog, unit: WeightUnit) {
                         modifier = Modifier.padding(top = 2.dp)
                     )
                 }
+            }
+            IconButton(onClick = onDeleteClick) {
+                Icon(
+                    Icons.Default.Delete,
+                    contentDescription = "Delete",
+                    tint = Danger
+                )
             }
         }
     }
