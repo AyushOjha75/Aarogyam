@@ -55,9 +55,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build debug APK
-        env:
-          GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.caching=true"
-        run: ./gradlew assembleDebug --stacktrace
+        run: ./gradlew assembleDebug
 
       - name: Verify APK exists
         run: |
