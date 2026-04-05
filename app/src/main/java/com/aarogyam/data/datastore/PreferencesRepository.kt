@@ -1,0 +1,41 @@
+package com.aarogyam.data.datastore
+
+import android.content.Context
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.doublePreferencesKey
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.preferencesDataStore
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
+
+private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "aarogyam_prefs")
+
+class PreferencesRepository(private val context: Context) {
+
+    companion object {
+        val KEY_UNIT = stringPreferencesKey("weight_unit")
+        val KEY_GOAL_KG = doublePreferencesKey("goal_kg")
+    }
+
+    val weightUnit: Flow<String> = context.dataStore.data.map { prefs ->
+        prefs[KEY_UNIT] ?: "KG"
+    }
+
+    val goalKg: Flow<Double> = context.dataStore.data.map { prefs ->
+        prefs[KEY_GOAL_KG] ?: 0.0
+    }
+
+    suspend fun setUnit(unit: String) {
+        context.dataStore.edit { prefs ->
+            prefs[KEY_UNIT] = unit
+        }
+    }
+
+    suspend fun setGoalKg(kg: Double) {
+        context.dataStore.edit { prefs ->
+            prefs[KEY_GOAL_KG] = kg
+        }
+    }
+}
